@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Sunny the Queen</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +32,7 @@
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body.letter-page {
@@ -38,6 +42,10 @@
       font-family: "Cormorant Garamond", serif;
       color: #f8e9f2;
       overflow: hidden;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .aurora {
@@ -56,11 +64,18 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -200%);
       width: min(76vw, 440px);
       height: min(34vh, 260px);
       z-index: 20;
       perspective: 2000px;
+      opacity: 0;
+      transition: transform 1.2s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.8s ease;
+    }
+
+    .stage.landed {
+      transform: translate(-50%, -50%);
+      opacity: 1;
     }
 
     .envelope {
@@ -70,6 +85,7 @@
       cursor: pointer;
       transform-style: preserve-3d;
       transition: transform 0.35s ease;
+      touch-action: manipulation;
     }
 
     .envelope:hover {
@@ -187,7 +203,7 @@
       left: 50%;
       width: min(72vw, 600px);
       max-height: 34vh;
-      transform: translate(-50%, -50%) scale(0.2);
+      transform: translate(-50%, -150%) scale(0.2);
       padding: 34px 30px;
       background:
         linear-gradient(180deg, rgba(255, 252, 246, 0.98), rgba(251, 238, 226, 0.98)),
@@ -204,10 +220,11 @@
         inset 0 -16px 30px rgba(223, 95, 146, 0.08);
       opacity: 0;
       pointer-events: none;
-      transition: transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+      transition: transform 1.2s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.8s ease;
       overflow: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
       z-index: 60;
     }
 
@@ -260,6 +277,8 @@
       background:
         repeating-linear-gradient(0deg, rgba(176, 150, 126, 0.1), rgba(176, 150, 126, 0.1) 1px, transparent 1px, transparent 34px);
       background-clip: padding-box;
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     .letter-text {
@@ -278,18 +297,62 @@
 
     @media (max-width: 700px) {
       .stage {
-        width: min(84vw, 420px);
-        height: min(30vh, 220px);
+        width: min(90vw, 380px);
+        height: min(28vh, 200px);
       }
 
       .letter-paper {
-        max-height: 55vh;
-        padding: 28px 22px;
+        width: min(92vw, 500px);
+        max-height: 70vh;
+        padding: 24px 18px;
       }
 
       .letter-text {
-        font-size: 18px;
-        line-height: 1.9;
+        font-size: 17px;
+        line-height: 1.85;
+      }
+
+      .env-seal {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+      }
+
+      .aurora {
+        filter: blur(30px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stage {
+        width: min(92vw, 340px);
+        height: min(25vh, 180px);
+      }
+
+      .letter-paper {
+        width: min(94vw, 450px);
+        max-height: 75vh;
+        padding: 20px 16px;
+      }
+
+      .letter-text {
+        font-size: 16px;
+        line-height: 1.8;
+      }
+
+      .env-seal {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+      }
+
+      @keyframes letter-float {
+        0%, 100% {
+          transform: translate(-50%, -50%) scale(1) translateY(0);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1) translateY(-5px);
+        }
       }
     }
 
@@ -372,6 +435,36 @@ Người mà cậu ghét nhất`;
       bgMusic.volume = 0.25;
     }
 
+    // Mobile audio playback handler
+    let audioPlayed = false;
+    function tryPlayAudio() {
+      if (!audioPlayed && bgMusic) {
+        const playPromise = bgMusic.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              audioPlayed = true;
+            })
+            .catch(() => {
+              // Auto-play blocked, will retry on user interaction
+            });
+        }
+      }
+    }
+
+    // Try to play on various user interactions (for mobile)
+    document.addEventListener("touchstart", tryPlayAudio, { once: true });
+    document.addEventListener("click", tryPlayAudio, { once: true });
+    window.addEventListener("load", tryPlayAudio);
+
+    // Envelope falling animation
+    window.addEventListener("load", () => {
+      const stage = document.querySelector(".stage");
+      setTimeout(() => {
+        stage.classList.add("landed");
+      }, 100);
+    });
+
     const envelopeWrapper = document.getElementById("envelopeWrapper");
     const letterOverlay = document.getElementById("letterOverlay");
     const letterPaper = document.getElementById("letterPaper");
@@ -402,6 +495,9 @@ Người mà cậu ghét nhất`;
         return;
       }
 
+      // Try to play audio on interaction (for mobile)
+      tryPlayAudio();
+
       envelopeWrapper.classList.add("opened");
       setTimeout(() => {
         letterOverlay.classList.add("show");
@@ -424,7 +520,17 @@ Người mà cậu ghét nhất`;
     }
 
     envelopeWrapper.addEventListener("click", openLetter);
+    envelopeWrapper.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      openLetter();
+    }, { passive: false });
+    
     letterOverlay.addEventListener("click", closeLetter);
+    letterOverlay.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      closeLetter();
+    }, { passive: false });
+    
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         closeLetter();
