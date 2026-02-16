@@ -7,15 +7,54 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E👑%3C/text%3E%3C/svg%3E">
 
 </head>
 <body class="container game-page">
   
   <div class="night"></div>
-  <div class="valentine-question">
-    <p class="valentine-text">Sunny the Queen</p>
+
+  <!-- Choice Modal -->
+  <div id="choiceModal" class="password-modal active">
+    <div class="password-modal__content" style="max-width: 450px;">
+      <h2 class="password-modal__title" style="margin-bottom: 35px;">Chọn một trong hai để tiếp tục</h2>
+      <div class="choice-buttons">
+        <button id="playGameBtn" class="choice-btn choice-btn--game">
+          <span class="choice-btn__icon">🎮</span>
+          <span class="choice-btn__text">Chơi Game</span>
+        </button>
+        <button id="enterPasswordBtn" class="choice-btn choice-btn--password">
+          <span class="choice-btn__icon">🔐</span>
+          <span class="choice-btn__text">Nhập Mật Khẩu</span>
+        </button>
+      </div>
+    </div>
   </div>
-  <section class="memory-game" aria-live="polite">
+
+  <!-- Password Modal -->
+  <div id="passwordModal" class="password-modal">
+    <div class="password-modal__content">
+      <h2 class="password-modal__title">Đố biết luôn</h2>
+      <div class="password-modal__inputs">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+        <input type="text" class="password-modal__digit" inputmode="numeric" maxlength="1" autocomplete="off">
+      </div>
+      <button id="backFromPasswordBtn" class="back-btn">← Quay lại</button>
+    </div>
+  </div>
+
+  <button id="backFromGameBtn" class="back-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 9999;">← Quay lại</button>
+
+  <div class="valentine-question" style="display: none;" id="gameContent">
+    <p class="valentine-text"></p>
+  </div>
+  <section class="memory-game" style="display: none;" aria-live="polite">
     <div class="memory-header">
       
     </div>
@@ -25,6 +64,86 @@
   
   <script src="./script.js"></script>
   <script src="./yes.js"></script>
+  <script>
+    const CORRECT_PASSWORD = "02022026";
+    const choiceModal = document.getElementById('choiceModal');
+    const passwordModal = document.getElementById('passwordModal');
+    const playGameBtn = document.getElementById('playGameBtn');
+    const enterPasswordBtn = document.getElementById('enterPasswordBtn');
+    const gameContent = document.getElementById('gameContent');
+    const memoryGame = document.querySelector('.memory-game');
+    const digitInputs = document.querySelectorAll('.password-modal__digit');
+
+    playGameBtn.addEventListener('click', () => {
+      choiceModal.classList.remove('active');
+      gameContent.style.display = 'block';
+      memoryGame.style.display = 'grid';
+      backFromGameBtn.style.display = 'block';
+    });
+
+    enterPasswordBtn.addEventListener('click', () => {
+      choiceModal.classList.remove('active');
+      passwordModal.classList.add('active');
+      setTimeout(() => digitInputs[0].focus(), 100);
+    });
+
+    // Back buttons
+    const backFromPasswordBtn = document.getElementById('backFromPasswordBtn');
+    const backFromGameBtn = document.getElementById('backFromGameBtn');
+
+    backFromPasswordBtn.addEventListener('click', () => {
+      passwordModal.classList.remove('active');
+      choiceModal.classList.add('active');
+      digitInputs.forEach(input => input.value = '');
+    });
+
+    backFromGameBtn.addEventListener('click', () => {
+      gameContent.style.display = 'none';
+      memoryGame.style.display = 'none';
+      backFromGameBtn.style.display = 'none';
+      choiceModal.classList.add('active');
+    });
+
+    // Password input handling
+    digitInputs.forEach((input, index) => {
+      input.addEventListener("input", (e) => {
+        if (e.target.value.length === 1 && /\d/.test(e.target.value)) {
+          if (index < digitInputs.length - 1) {
+            digitInputs[index + 1].focus();
+          } else {
+            checkPassword();
+          }
+        } else if (e.target.value.length > 1) {
+          e.target.value = e.target.value[0];
+        } else if (e.target.value !== "" && !/\d/.test(e.target.value)) {
+          e.target.value = "";
+        }
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && input.value === "" && index > 0) {
+          digitInputs[index - 1].focus();
+        }
+      });
+    });
+
+    const checkPassword = () => {
+      const password = Array.from(digitInputs).map(input => input.value).join("");
+      
+      if (password === CORRECT_PASSWORD) {
+        window.location.href = 'letter.html';
+      } else {
+        digitInputs.forEach(input => {
+          input.classList.add("shake");
+          setTimeout(() => {
+            input.classList.remove("shake");
+            input.value = "";
+          }, 500);
+        });
+        setTimeout(() => digitInputs[0].focus(), 500);
+      }
+    };
+  </script>
   <div class="bubbles">
     <div class="bubble"><svg class="heart" viewBox="0 0 32 32">
         <title>heart22</title>
